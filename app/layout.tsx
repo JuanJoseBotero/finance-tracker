@@ -1,10 +1,17 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Toaster } from '@/components/ui/sonner'
+import { NavBar } from '@/components/nav-bar'
 import './globals.css'
 
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
+
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Finanza · Control de gastos e ingresos',
+  description:
+    'Registra tus gastos e ingresos, clasifícalos por categoría y método de pago, y da seguimiento a tus metas de ahorro.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -27,6 +34,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light dark',
+  userScalable: true,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
     { media: '(prefers-color-scheme: dark)', color: 'black' },
@@ -39,9 +47,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="es" className={`bg-background ${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased font-sans">
+        <NavBar />
         {children}
+        <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

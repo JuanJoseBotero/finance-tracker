@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { NavBar } from '@/components/nav-bar'
+import { PwaInstall } from '@/components/pwa/pwa-install'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
   description:
     'Registra tus gastos e ingresos, clasifícalos por categoría y método de pago, y da seguimiento a tus metas de ahorro.',
   generator: 'v0.app',
+  manifest: '/manifest.json',
   icons: {
     icon: [
       {
@@ -28,16 +30,22 @@ export const metadata: Metadata = {
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Finanza',
   },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light dark',
   userScalable: true,
+  viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
+    { media: '(prefers-color-scheme: light)', color: '#f4f9ff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b1524' },
   ],
 }
 
@@ -51,6 +59,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <NavBar />
         {children}
+        <PwaInstall />
         <Toaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

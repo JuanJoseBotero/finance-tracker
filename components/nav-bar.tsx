@@ -6,6 +6,17 @@ import { cn } from "@/lib/utils"
 import { LayoutGrid, ArrowLeftRight, Target, Wallet, LogOut } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
@@ -62,15 +73,33 @@ export function NavBar() {
         </nav>
 
         {session?.user && (
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            className="shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-            onClick={handleSignOut}
-            aria-label="Cerrar sesión"
-          >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  className="shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                  aria-label="Cerrar sesión"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              }
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tendrás que volver a iniciar sesión con tu correo y contraseña para acceder a tus movimientos y
+                  metas.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSignOut}>Cerrar sesión</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
     </header>

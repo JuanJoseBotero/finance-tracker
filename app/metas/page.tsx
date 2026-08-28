@@ -12,7 +12,7 @@ export default async function MetasPage() {
   const totalSaved = goals.reduce((sum, g) => sum + Number(g.currentAmount), 0)
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
+    <main className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Metas</h1>
@@ -23,7 +23,7 @@ export default async function MetasPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="shadow-sm">
-          <CardContent className="flex items-center gap-3 p-5">
+          <CardContent className="flex items-center gap-3 p-4 sm:p-5">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Target className="h-5 w-5" aria-hidden="true" />
             </span>
@@ -34,7 +34,7 @@ export default async function MetasPage() {
           </CardContent>
         </Card>
         <Card className="shadow-sm">
-          <CardContent className="flex items-center gap-3 p-5">
+          <CardContent className="flex items-center gap-3 p-4 sm:p-5">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
             </span>
@@ -45,7 +45,7 @@ export default async function MetasPage() {
           </CardContent>
         </Card>
         <Card className="shadow-sm">
-          <CardContent className="flex items-center gap-3 p-5">
+          <CardContent className="flex items-center gap-3 p-4 sm:p-5">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
               <PiggyBank className="h-5 w-5" aria-hidden="true" />
             </span>

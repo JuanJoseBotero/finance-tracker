@@ -52,7 +52,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
 
   return (
     <Card className="shadow-sm">
-      <CardContent className="flex flex-col gap-4 p-5">
+      <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <span

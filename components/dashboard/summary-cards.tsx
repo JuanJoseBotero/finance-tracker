@@ -49,7 +49,7 @@ export function SummaryCards({
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
         <Card key={card.label} className="shadow-sm">
-          <CardContent className="flex items-center justify-between gap-4 p-5">
+          <CardContent className="flex items-center justify-between gap-4 p-4 sm:p-5">
             <div className="flex flex-col gap-1">
               <span className="text-sm text-muted-foreground">{card.label}</span>
               <span className={cn("font-mono text-2xl font-semibold tracking-tight", card.tone)}>

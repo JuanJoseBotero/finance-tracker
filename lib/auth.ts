@@ -30,10 +30,11 @@ export const auth = betterAuth({
     enabled: true,
   },
   session: {
-    // No expiration by inactivity or fixed time window: the session lasts
-    // 10 years and refreshes on every request, so it effectively never
-    // expires unless the user explicitly signs out.
-    expiresIn: 60 * 60 * 24 * 365 * 10,
+    // 400 days is the maximum Max-Age browsers allow for a cookie. Combined
+    // with a 1-day updateAge, the session's expiry rolls forward on every
+    // request, so as long as the app is opened at least once a year the
+    // session effectively never expires unless the user explicitly signs out.
+    expiresIn: 60 * 60 * 24 * 400,
     updateAge: 60 * 60 * 24,
   },
   databaseHooks: {

@@ -1,9 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutGrid, ArrowLeftRight, Target, Wallet } from "lucide-react"
+import { LayoutGrid, ArrowLeftRight, Target, Wallet, LogOut } from "lucide-react"
+import { authClient, useSession } from "@/lib/auth-client"
+import { Button } from "@/components/ui/button"
 
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
@@ -11,8 +13,20 @@ const links = [
   { href: "/metas", label: "Metas", icon: Target },
 ]
 
+const AUTH_ROUTES = ["/sign-in", "/sign-up"]
+
 export function NavBar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { data: session } = useSession()
+
+  if (AUTH_ROUTES.includes(pathname)) return null
+
+  async function handleSignOut() {
+    await authClient.signOut()
+    router.push("/sign-in")
+    router.refresh()
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -46,6 +60,18 @@ export function NavBar() {
             )
           })}
         </nav>
+
+        {session?.user && (
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+            onClick={handleSignOut}
+            aria-label="Cerrar sesión"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        )}
       </div>
     </header>
   )

@@ -1,3 +1,6 @@
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { getGoals } from "@/app/actions/goals"
 import { GoalCard } from "@/components/goals/goal-card"
 import { GoalFormDialog } from "@/components/goals/goal-form-dialog"
@@ -6,6 +9,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Target, CheckCircle2, PiggyBank } from "lucide-react"
 
 export default async function MetasPage() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect("/sign-in")
+
   const goals = await getGoals()
   const active = goals.filter((g) => g.status === "active")
   const completed = goals.filter((g) => g.status === "completed")

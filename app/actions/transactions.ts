@@ -2,8 +2,16 @@
 
 import { db, pool } from "@/lib/db"
 import { transactions, categories } from "@/lib/db/schema"
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm"
+import { auth } from "@/lib/auth"
+import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
+
+async function getUserId() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) throw new Error("Unauthorized")
+  return session.user.id
+}
 
 export type TransactionInput = {
   type: "expense" | "income"
@@ -19,7 +27,9 @@ export async function getTransactions(filters?: {
   categoryId?: number
   paymentMethod?: string
 }) {
-  const conditions = []
+  const userId = await getUserId()
+
+  const conditions = [eq(transactions.userId, userId)]
   if (filters?.type) conditions.push(eq(transactions.type, filters.type))
   if (filters?.categoryId) conditions.push(eq(transactions.categoryId, filters.categoryId))
   if (filters?.paymentMethod) conditions.push(eq(transactions.paymentMethod, filters.paymentMethod))
@@ -39,18 +49,21 @@ export async function getTransactions(filters?: {
     })
     .from(transactions)
     .innerJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(transactions.occurredAt), desc(transactions.createdAt))
 
   return rows
 }
 
 export async function createTransaction(input: TransactionInput) {
+  const userId = await getUserId()
+
   if (!input.amount || input.amount <= 0) throw new Error("El monto debe ser mayor a cero")
   if (!input.categoryId) throw new Error("Selecciona una categoría")
   if (!input.occurredAt) throw new Error("Selecciona una fecha")
 
   await db.insert(transactions).values({
+    userId,
     type: input.type,
     amount: input.amount.toFixed(2),
     description: input.description?.trim() ?? "",
@@ -64,6 +77,8 @@ export async function createTransaction(input: TransactionInput) {
 }
 
 export async function updateTransaction(id: number, input: TransactionInput) {
+  const userId = await getUserId()
+
   if (!input.amount || input.amount <= 0) throw new Error("El monto debe ser mayor a cero")
 
   await db
@@ -76,22 +91,25 @@ export async function updateTransaction(id: number, input: TransactionInput) {
       paymentMethod: input.paymentMethod,
       occurredAt: input.occurredAt,
     })
-    .where(eq(transactions.id, id))
+    .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
 
   revalidatePath("/")
   revalidatePath("/movimientos")
 }
 
 export async function deleteTransaction(id: number) {
-  await db.delete(transactions).where(eq(transactions.id, id))
+  const userId = await getUserId()
+
+  await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
   revalidatePath("/")
   revalidatePath("/movimientos")
 }
 
 export async function getDashboardSummary() {
+  const userId = await getUserId()
+
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)
 
   const totalsResult = await pool.query<{
     income_month: string | null
@@ -104,8 +122,9 @@ export async function getDashboardSummary() {
       COALESCE(SUM(CASE WHEN type = 'expense' AND occurred_at >= $1 THEN amount END), 0) AS expense_month,
       COALESCE(SUM(CASE WHEN type = 'income' THEN amount END), 0) AS income_total,
       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount END), 0) AS expense_total
-    FROM transactions`,
-    [startOfMonth],
+    FROM transactions
+    WHERE user_id = $2`,
+    [startOfMonth, userId],
   )
 
   const monthlySeries = await pool.query<{
@@ -118,10 +137,10 @@ export async function getDashboardSummary() {
       COALESCE(SUM(CASE WHEN type = 'income' THEN amount END), 0) AS income,
       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount END), 0) AS expense
     FROM transactions
-    WHERE occurred_at >= $1
+    WHERE occurred_at >= $1 AND user_id = $2
     GROUP BY 1
     ORDER BY 1`,
-    [new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10)],
+    [new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10), userId],
   )
 
   const byCategory = await pool.query<{
@@ -133,10 +152,10 @@ export async function getDashboardSummary() {
     `SELECT c.id AS category_id, c.name, c.icon, SUM(t.amount) AS total
     FROM transactions t
     JOIN categories c ON c.id = t.category_id
-    WHERE t.type = 'expense' AND t.occurred_at >= $1
+    WHERE t.type = 'expense' AND t.occurred_at >= $1 AND t.user_id = $2
     GROUP BY c.id, c.name, c.icon
     ORDER BY total DESC`,
-    [startOfMonth],
+    [startOfMonth, userId],
   )
 
   const byPaymentMethod = await pool.query<{
@@ -145,10 +164,10 @@ export async function getDashboardSummary() {
   }>(
     `SELECT payment_method, SUM(amount) AS total
     FROM transactions
-    WHERE type = 'expense' AND occurred_at >= $1
+    WHERE type = 'expense' AND occurred_at >= $1 AND user_id = $2
     GROUP BY payment_method
     ORDER BY total DESC`,
-    [startOfMonth],
+    [startOfMonth, userId],
   )
 
   const recent = await db
@@ -164,6 +183,7 @@ export async function getDashboardSummary() {
     })
     .from(transactions)
     .innerJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(eq(transactions.userId, userId))
     .orderBy(desc(transactions.occurredAt), desc(transactions.createdAt))
     .limit(6)
 

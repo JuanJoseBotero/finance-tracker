@@ -1,3 +1,6 @@
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { getDashboardSummary } from "@/app/actions/transactions"
 import { getCategories } from "@/app/actions/categories"
 import { getGoals } from "@/app/actions/goals"
@@ -13,6 +16,9 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
 export default async function DashboardPage() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect("/sign-in")
+
   const [summary, categories, goals] = await Promise.all([
     getDashboardSummary(),
     getCategories(),

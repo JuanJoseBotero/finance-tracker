@@ -1,3 +1,6 @@
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { getTransactions } from "@/app/actions/transactions"
 import { getCategories } from "@/app/actions/categories"
 import { TransactionsTable } from "@/components/transactions/transactions-table"
@@ -11,6 +14,9 @@ export default async function MovimientosPage({
 }: {
   searchParams: Promise<{ type?: string; categoryId?: string; paymentMethod?: string }>
 }) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect("/sign-in")
+
   const params = await searchParams
   const categories = await getCategories()
 

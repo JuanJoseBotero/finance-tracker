@@ -2,8 +2,16 @@
 
 import { db } from "@/lib/db"
 import { goals, goalContributions } from "@/lib/db/schema"
+import { auth } from "@/lib/auth"
 import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
+
+async function getUserId() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) throw new Error("Unauthorized")
+  return session.user.id
+}
 
 export type GoalInput = {
   name: string
@@ -13,11 +21,23 @@ export type GoalInput = {
 }
 
 export async function getGoals() {
-  const rows = await db.select().from(goals).orderBy(desc(goals.createdAt))
+  const userId = await getUserId()
+  const rows = await db.select().from(goals).where(eq(goals.userId, userId)).orderBy(desc(goals.createdAt))
   return rows
 }
 
+async function assertOwnsGoal(goalId: number, userId: string) {
+  const [goal] = await db
+    .select({ id: goals.id })
+    .from(goals)
+    .where(and(eq(goals.id, goalId), eq(goals.userId, userId)))
+  if (!goal) throw new Error("Meta no encontrada")
+}
+
 export async function getGoalContributions(goalId: number) {
+  const userId = await getUserId()
+  await assertOwnsGoal(goalId, userId)
+
   return db
     .select()
     .from(goalContributions)
@@ -26,11 +46,14 @@ export async function getGoalContributions(goalId: number) {
 }
 
 export async function createGoal(input: GoalInput) {
+  const userId = await getUserId()
+
   const name = input.name.trim()
   if (!name) throw new Error("El nombre de la meta es obligatorio")
   if (!input.targetAmount || input.targetAmount <= 0) throw new Error("El monto objetivo debe ser mayor a cero")
 
   await db.insert(goals).values({
+    userId,
     name,
     targetAmount: input.targetAmount.toFixed(2),
     deadline: input.deadline,
@@ -42,6 +65,8 @@ export async function createGoal(input: GoalInput) {
 }
 
 export async function updateGoal(id: number, input: GoalInput) {
+  const userId = await getUserId()
+
   await db
     .update(goals)
     .set({
@@ -50,23 +75,31 @@ export async function updateGoal(id: number, input: GoalInput) {
       deadline: input.deadline,
       icon: input.icon,
     })
-    .where(eq(goals.id, id))
+    .where(and(eq(goals.id, id), eq(goals.userId, userId)))
 
   revalidatePath("/metas")
   revalidatePath("/")
 }
 
 export async function deleteGoal(id: number) {
+  const userId = await getUserId()
+  await assertOwnsGoal(id, userId)
+
   await db.delete(goalContributions).where(eq(goalContributions.goalId, id))
-  await db.delete(goals).where(eq(goals.id, id))
+  await db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId)))
   revalidatePath("/metas")
   revalidatePath("/")
 }
 
 export async function addGoalContribution(goalId: number, amount: number, occurredAt: string) {
+  const userId = await getUserId()
+
   if (!amount || amount <= 0) throw new Error("El monto del aporte debe ser mayor a cero")
 
-  const [goal] = await db.select().from(goals).where(eq(goals.id, goalId))
+  const [goal] = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.id, goalId), eq(goals.userId, userId)))
   if (!goal) throw new Error("Meta no encontrada")
 
   const newAmount = Number(goal.currentAmount) + amount

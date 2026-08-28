@@ -17,9 +17,9 @@ export function TransactionsFilters({ categories }: { categories: Category[] }) 
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  function setParam(key: string, value: string) {
+  function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString())
-    if (value === "all") {
+    if (!value || value === "all") {
       params.delete(key)
     } else {
       params.set(key, value)
@@ -37,7 +37,11 @@ export function TransactionsFilters({ categories }: { categories: Category[] }) 
     <div className="flex flex-wrap gap-3">
       <Select value={type} onValueChange={(v) => setParam("type", v)}>
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Tipo" />
+          <SelectValue placeholder="Tipo">
+            {(value: string) =>
+              value === "expense" ? "Gastos" : value === "income" ? "Ingresos" : "Todos los tipos"
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos los tipos</SelectItem>
@@ -48,7 +52,11 @@ export function TransactionsFilters({ categories }: { categories: Category[] }) 
 
       <Select value={categoryId} onValueChange={(v) => setParam("categoryId", v)}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Categoría" />
+          <SelectValue placeholder="Categoría">
+            {(value: string) =>
+              filteredCategories.find((c) => c.id.toString() === value)?.name ?? "Todas las categorías"
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todas las categorías</SelectItem>
@@ -62,7 +70,11 @@ export function TransactionsFilters({ categories }: { categories: Category[] }) 
 
       <Select value={paymentMethod} onValueChange={(v) => setParam("paymentMethod", v)}>
         <SelectTrigger className="w-[190px]">
-          <SelectValue placeholder="Método de pago" />
+          <SelectValue placeholder="Método de pago">
+            {(value: string) =>
+              value === "all" ? "Todos los métodos" : PAYMENT_METHODS.find((m) => m.value === value)?.label ?? "Todos los métodos"
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos los métodos</SelectItem>

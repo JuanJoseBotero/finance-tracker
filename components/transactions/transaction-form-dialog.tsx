@@ -26,7 +26,7 @@ import {
   SelectLabel,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PAYMENT_METHODS } from "@/lib/constants"
+import { PAYMENT_METHODS, getPaymentMethodLabel } from "@/lib/constants"
 import { createTransaction, updateTransaction } from "@/app/actions/transactions"
 
 type Category = { id: number; name: string; kind: string; icon: string }
@@ -178,9 +178,11 @@ export function TransactionFormDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
               <Label htmlFor="category">Categoría</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
                 <SelectTrigger id="category" className="w-full">
-                  <SelectValue placeholder="Selecciona" />
+                  <SelectValue placeholder="Selecciona">
+                    {(value: string) => filteredCategories.find((c) => c.id.toString() === value)?.name ?? "Selecciona"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -197,9 +199,11 @@ export function TransactionFormDialog({
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="paymentMethod">Método de pago</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v ?? "cash")}>
                 <SelectTrigger id="paymentMethod" className="w-full">
-                  <SelectValue placeholder="Selecciona" />
+                  <SelectValue placeholder="Selecciona">
+                    {(value: string) => getPaymentMethodLabel(value)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {PAYMENT_METHODS.map((m) => (

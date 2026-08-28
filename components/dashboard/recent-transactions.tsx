@@ -21,9 +21,12 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
       <CardHeader>
         <CardTitle>Movimientos recientes</CardTitle>
         <CardAction>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/movimientos">Ver todos</Link>
-          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/movimientos">Ver todos</Link>}
+          />
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">

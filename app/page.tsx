@@ -55,12 +55,18 @@ export default async function DashboardPage() {
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold tracking-tight">Metas en progreso</h2>
-          <Button asChild variant="ghost" size="sm" className="gap-1.5">
-            <Link href="/metas">
-              Ver todas
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5"
+            nativeButton={false}
+            render={
+              <Link href="/metas">
+                Ver todas
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            }
+          />
         </div>
         {activeGoals.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">

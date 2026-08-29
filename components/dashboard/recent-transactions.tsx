@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { formatCOP, getCategoryIcon, getPaymentMethodLabel } from "@/lib/constants"
+import { formatCOP, formatDate, getCategoryIcon, getPaymentMethodLabel } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
 type Transaction = {
@@ -45,7 +45,7 @@ export function RecentTransactions({ transactions }: { transactions: Transaction
                 <p className="truncate text-sm font-medium">{tx.description || tx.categoryName}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {tx.categoryName} · {getPaymentMethodLabel(tx.paymentMethod)} ·{" "}
-                  {new Date(tx.occurredAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
+                  {formatDate(tx.occurredAt, { day: "2-digit", month: "short" })}
                 </p>
               </div>
               <span

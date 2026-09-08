@@ -19,9 +19,10 @@ export function MethodBalanceCards({
       icon: Banknote,
     },
     {
-      label: "Balance en la cuenta",
+      label: "Balance libre en la cuenta",
       value: accountBalance,
       icon: Landmark,
+      hint: "Sin contar lo apartado en bolsillos",
     },
     {
       label: "Balance tarjeta de crédito",
@@ -45,6 +46,7 @@ export function MethodBalanceCards({
                   <span className={cn("font-mono text-2xl font-semibold tracking-tight", tone)}>
                     {formatCOP(card.value)}
                   </span>
+                  {card.hint && <span className="text-xs text-muted-foreground">{card.hint}</span>}
                 </div>
                 <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", bg)}>
                   <card.icon className={cn("h-5 w-5", tone)} aria-hidden="true" />

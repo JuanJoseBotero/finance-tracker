@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { getDashboardSummary } from "@/app/actions/transactions"
 import { getCategories } from "@/app/actions/categories"
 import { getGoals } from "@/app/actions/goals"
+import { getPockets } from "@/app/actions/pockets"
 import { SummaryCards } from "@/components/dashboard/summary-cards"
 import { MethodBalanceCards } from "@/components/dashboard/method-balance-cards"
 import { MonthlyChart } from "@/components/dashboard/monthly-chart"
@@ -12,7 +13,10 @@ import { PaymentMethodChart } from "@/components/dashboard/payment-method-chart"
 import { RecentTransactions } from "@/components/dashboard/recent-transactions"
 import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog"
 import { GoalCard } from "@/components/goals/goal-card"
+import { PocketCard } from "@/components/pockets/pocket-card"
+import { PocketFormDialog } from "@/components/pockets/pocket-form-dialog"
 import { Button } from "@/components/ui/button"
+import { formatCOP } from "@/lib/constants"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
@@ -20,13 +24,15 @@ export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in")
 
-  const [summary, categories, goals] = await Promise.all([
+  const [summary, categories, goals, pockets] = await Promise.all([
     getDashboardSummary(),
     getCategories(),
     getGoals(),
+    getPockets(),
   ])
 
   const activeGoals = goals.filter((g) => g.status === "active").slice(0, 3)
+  const previewPockets = pockets.slice(0, 3)
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-8">
@@ -90,6 +96,47 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activeGoals.map((goal) => (
               <GoalCard key={goal.id} goal={goal} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Bolsillos</h2>
+            <p className="text-sm text-muted-foreground">
+              Dinero de tu cuenta que apartaste para ahorrar: {formatCOP(summary.pocketsTotal)}
+            </p>
+          </div>
+          {pockets.length === 0 ? (
+            <PocketFormDialog />
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              nativeButton={false}
+              render={
+                <Link href="/bolsillos">
+                  Ver todos
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              }
+            />
+          )}
+        </div>
+        {previewPockets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
+            <p className="text-sm font-medium">Aún no tienes bolsillos</p>
+            <p className="text-sm text-muted-foreground">
+              Crea uno para apartar dinero de tu balance libre en cuenta y ahorrarlo.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {previewPockets.map((pocket) => (
+              <PocketCard key={pocket.id} pocket={pocket} />
             ))}
           </div>
         )}

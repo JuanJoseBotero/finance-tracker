@@ -79,7 +79,9 @@ export const transactions = pgTable("transactions", {
   description: text("description").notNull().default(""),
   categoryId: integer("category_id").notNull(),
   paymentMethod: text("payment_method").notNull(), // "cash" | "debit" | "credit" | "transfer"
-  occurredAt: date("occurred_at").notNull(),
+  // mode: "string" keeps this a plain "YYYY-MM-DD" calendar date with no
+  // timezone conversion, matching the <input type="date"> value it comes from.
+  occurredAt: date("occurred_at", { mode: "string" }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -89,7 +91,7 @@ export const goals = pgTable("goals", {
   name: text("name").notNull(),
   targetAmount: numeric("target_amount", { precision: 14, scale: 2 }).notNull(),
   currentAmount: numeric("current_amount", { precision: 14, scale: 2 }).notNull().default("0"),
-  deadline: date("deadline"),
+  deadline: date("deadline", { mode: "string" }),
   icon: text("icon").notNull().default("target"),
   status: text("status").notNull().default("active"), // "active" | "completed"
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -99,6 +101,6 @@ export const goalContributions = pgTable("goal_contributions", {
   id: serial("id").primaryKey(),
   goalId: integer("goal_id").notNull(),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
-  occurredAt: date("occurred_at").notNull(),
+  occurredAt: date("occurred_at", { mode: "string" }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 })

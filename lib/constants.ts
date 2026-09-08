@@ -85,6 +85,22 @@ export function formatCOP(value: number | string) {
   return currencyFormatter.format(Number.isFinite(num) ? num : 0)
 }
 
+/**
+ * Formats a plain "YYYY-MM-DD" calendar date (as stored for transactions,
+ * goal deadlines, and contributions) without any timezone conversion.
+ * Using `new Date(dateString)` + `toLocaleDateString` shifts the date back
+ * a day for users west of UTC, since the string is parsed as UTC midnight
+ * and then rendered in the browser's local timezone.
+ */
+export function formatDate(
+  value: string,
+  options: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" },
+) {
+  const [year, month, day] = value.split("-").map(Number)
+  const date = new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1))
+  return date.toLocaleDateString("es-CO", { ...options, timeZone: "UTC" })
+}
+
 export const MONTH_LABELS_ES = [
   "Ene",
   "Feb",

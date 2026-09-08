@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { formatCOP, getCategoryIcon } from "@/lib/constants"
+import { formatCOP, formatDate, getCategoryIcon } from "@/lib/constants"
 import { deleteGoal } from "@/app/actions/goals"
 import { GoalFormDialog } from "./goal-form-dialog"
 import { ContributeDialog } from "./contribute-dialog"
@@ -66,7 +66,7 @@ export function GoalCard({ goal }: { goal: Goal }) {
               <p className="font-medium leading-tight">{goal.name}</p>
               {goal.deadline && (
                 <p className="text-xs text-muted-foreground">
-                  Meta: {new Date(goal.deadline).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
+                  Meta: {formatDate(goal.deadline)}
                 </p>
               )}
             </div>

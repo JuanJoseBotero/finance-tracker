@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { formatCOP, getCategoryIcon, getPaymentMethodLabel } from "@/lib/constants"
+import { formatCOP, formatDate, getCategoryIcon, getPaymentMethodLabel } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { deleteTransaction } from "@/app/actions/transactions"
 import { TransactionFormDialog } from "./transaction-form-dialog"
@@ -107,13 +107,7 @@ function TransactionRow({ tx, categories }: { tx: Transaction; categories: Categ
         </Badge>
       </TableCell>
       <TableCell className="text-muted-foreground">{getPaymentMethodLabel(tx.paymentMethod)}</TableCell>
-      <TableCell className="text-muted-foreground">
-        {new Date(tx.occurredAt).toLocaleDateString("es-CO", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}
-      </TableCell>
+      <TableCell className="text-muted-foreground">{formatDate(tx.occurredAt)}</TableCell>
       <TableCell
         className={cn(
           "text-right font-mono font-semibold",

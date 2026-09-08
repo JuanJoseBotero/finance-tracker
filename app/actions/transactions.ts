@@ -189,28 +189,11 @@ export async function getDashboardSummary() {
   const userPockets = await db.select().from(pockets).where(eq(pockets.userId, userId))
   const pocketsTotal = userPockets.reduce((sum, p) => sum + Number(p.currentAmount), 0)
 
-  // Total spent on the credit card ever. Credit purchases are eventually
-  // paid off from the bank account, so only the portion still UNPAID is a
-  // pending obligation that should be subtracted from the free account
-  // balance. Once you pay the card (credit_card_payments), that portion is
-  // no longer pending, so it's released back — otherwise every credit
-  // purchase would permanently reduce the account balance forever, even
-  // after it's fully paid off, which would spiral into an ever-growing
-  // (and misleading) negative number.
-  const creditSpend = await pool.query<{ total: string }>(
-    `SELECT COALESCE(SUM(amount), 0) AS total
-    FROM transactions
-    WHERE user_id = $1 AND type = 'expense' AND payment_method = 'credit'`,
-    [userId],
-  )
-  const creditSpendTotal = Number(creditSpend.rows[0]?.total ?? 0)
-
   const userCreditPayments = await db
     .select()
     .from(creditCardPayments)
     .where(eq(creditCardPayments.userId, userId))
   const creditPaymentsTotal = userCreditPayments.reduce((sum, p) => sum + Number(p.amount), 0)
-  const outstandingCreditDebt = Math.max(creditSpendTotal - creditPaymentsTotal, 0)
 
   const recent = await db
     .select({
@@ -251,16 +234,18 @@ export async function getDashboardSummary() {
       paymentMethod: r.payment_method,
       total: Number(r.total),
     })),
-    // Cash and debit/transfer both reflect money the user actually has on
-    // hand or in their bank account; credit card balance reflects debt, so
-    // it's kept separate (negative when there's outstanding spend to pay).
-    // Money saved into pockets is still physically in the account, so it's
-    // subtracted here to show the truly "free" (uncommitted) account balance.
+    // "Balance libre en la cuenta" is income minus every expense that draws
+    // from the account (debit, transfer, and credit — a credit purchase is
+    // still money you're committed to pay from the account eventually),
+    // minus what's set aside in pockets. This subtraction from a credit
+    // purchase is permanent: paying off the card later does NOT add it back
+    // here — payments only affect the credit card balance below.
     cashBalance: methodBalances.cash ?? 0,
     accountBalance:
-      (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal - outstandingCreditDebt,
-    // Payments recorded against the credit card only reduce the displayed
-    // debt (move it closer to zero) — they don't touch any other balance.
+      (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) + (methodBalances.credit ?? 0) - pocketsTotal,
+    // Credit card balance is just the credit card debt: total credit
+    // expenses minus what you've paid off. Paying the card only changes
+    // this number — it never affects cash, account, or pocket balances.
     creditBalance: (methodBalances.credit ?? 0) + creditPaymentsTotal,
     pocketsTotal,
     recent,

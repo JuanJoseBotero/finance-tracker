@@ -1,7 +1,7 @@
 "use server"
 
 import { db, pool } from "@/lib/db"
-import { transactions, categories, pockets } from "@/lib/db/schema"
+import { transactions, categories, pockets, creditCardPayments } from "@/lib/db/schema"
 import { auth } from "@/lib/auth"
 import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -189,6 +189,12 @@ export async function getDashboardSummary() {
   const userPockets = await db.select().from(pockets).where(eq(pockets.userId, userId))
   const pocketsTotal = userPockets.reduce((sum, p) => sum + Number(p.currentAmount), 0)
 
+  const userCreditPayments = await db
+    .select()
+    .from(creditCardPayments)
+    .where(eq(creditCardPayments.userId, userId))
+  const creditPaymentsTotal = userCreditPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+
   const recent = await db
     .select({
       id: transactions.id,
@@ -235,7 +241,9 @@ export async function getDashboardSummary() {
     // subtracted here to show the truly "free" (uncommitted) account balance.
     cashBalance: methodBalances.cash ?? 0,
     accountBalance: (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal,
-    creditBalance: methodBalances.credit ?? 0,
+    // Payments recorded against the credit card only reduce the displayed
+    // debt (move it closer to zero) — they don't touch any other balance.
+    creditBalance: (methodBalances.credit ?? 0) + creditPaymentsTotal,
     pocketsTotal,
     recent,
   }

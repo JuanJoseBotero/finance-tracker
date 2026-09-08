@@ -127,3 +127,17 @@ export const pocketMovements = pgTable("pocket_movements", {
   occurredAt: date("occurred_at", { mode: "string" }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 })
+
+// Credit card payments just record money paid toward the credit card debt so
+// the dashboard can show a lower (less negative) credit card balance. They
+// are intentionally NOT transactions: they don't touch cash/account balance,
+// byPaymentMethod totals, or the transactions list — paying off a credit
+// card doesn't change how much cash/account money the user has on record
+// here, it only reflects that the debt itself is now smaller.
+export const creditCardPayments = pgTable("credit_card_payments", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id"),
+  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+  occurredAt: date("occurred_at", { mode: "string" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+})

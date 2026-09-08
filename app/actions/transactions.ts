@@ -189,10 +189,14 @@ export async function getDashboardSummary() {
   const userPockets = await db.select().from(pockets).where(eq(pockets.userId, userId))
   const pocketsTotal = userPockets.reduce((sum, p) => sum + Number(p.currentAmount), 0)
 
-  // Total spent on the credit card. Credit purchases are eventually paid off
-  // from the bank account, so they're subtracted from the free account
-  // balance as a pending obligation. Paying the card off (credit_card_payments)
-  // does NOT add this money back, per the user's chosen behavior.
+  // Total spent on the credit card ever. Credit purchases are eventually
+  // paid off from the bank account, so only the portion still UNPAID is a
+  // pending obligation that should be subtracted from the free account
+  // balance. Once you pay the card (credit_card_payments), that portion is
+  // no longer pending, so it's released back — otherwise every credit
+  // purchase would permanently reduce the account balance forever, even
+  // after it's fully paid off, which would spiral into an ever-growing
+  // (and misleading) negative number.
   const creditSpend = await pool.query<{ total: string }>(
     `SELECT COALESCE(SUM(amount), 0) AS total
     FROM transactions
@@ -206,6 +210,7 @@ export async function getDashboardSummary() {
     .from(creditCardPayments)
     .where(eq(creditCardPayments.userId, userId))
   const creditPaymentsTotal = userCreditPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+  const outstandingCreditDebt = Math.max(creditSpendTotal - creditPaymentsTotal, 0)
 
   const recent = await db
     .select({
@@ -253,7 +258,7 @@ export async function getDashboardSummary() {
     // subtracted here to show the truly "free" (uncommitted) account balance.
     cashBalance: methodBalances.cash ?? 0,
     accountBalance:
-      (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal - creditSpendTotal,
+      (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal - outstandingCreditDebt,
     // Payments recorded against the credit card only reduce the displayed
     // debt (move it closer to zero) — they don't touch any other balance.
     creditBalance: (methodBalances.credit ?? 0) + creditPaymentsTotal,

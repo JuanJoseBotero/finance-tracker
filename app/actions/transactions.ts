@@ -234,15 +234,18 @@ export async function getDashboardSummary() {
       paymentMethod: r.payment_method,
       total: Number(r.total),
     })),
-    // Cash and debit/transfer both reflect money the user actually has on
-    // hand or in their bank account; credit card balance reflects debt, so
-    // it's kept separate (negative when there's outstanding spend to pay).
-    // Money saved into pockets is still physically in the account, so it's
-    // subtracted here to show the truly "free" (uncommitted) account balance.
+    // "Balance libre en la cuenta" is income minus every expense that draws
+    // from the account (debit, transfer, and credit — a credit purchase is
+    // still money you're committed to pay from the account eventually),
+    // minus what's set aside in pockets. This subtraction from a credit
+    // purchase is permanent: paying off the card later does NOT add it back
+    // here — payments only affect the credit card balance below.
     cashBalance: methodBalances.cash ?? 0,
-    accountBalance: (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal,
-    // Payments recorded against the credit card only reduce the displayed
-    // debt (move it closer to zero) — they don't touch any other balance.
+    accountBalance:
+      (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) + (methodBalances.credit ?? 0) - pocketsTotal,
+    // Credit card balance is just the credit card debt: total credit
+    // expenses minus what you've paid off. Paying the card only changes
+    // this number — it never affects cash, account, or pocket balances.
     creditBalance: (methodBalances.credit ?? 0) + creditPaymentsTotal,
     pocketsTotal,
     recent,

@@ -25,7 +25,7 @@ export function MethodBalanceCards({
       label: "Balance libre en la cuenta",
       value: accountBalance,
       icon: Landmark,
-      hint: "Sin contar lo apartado en bolsillos",
+      hint: "Descontando bolsillos y gastos con tarjeta",
     },
     {
       key: "credit",

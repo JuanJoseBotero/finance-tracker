@@ -170,6 +170,22 @@ export async function getDashboardSummary() {
     [startOfMonth, userId],
   )
 
+  const balanceByMethod = await pool.query<{
+    payment_method: string
+    balance: string
+  }>(
+    `SELECT payment_method, COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END), 0) AS balance
+    FROM transactions
+    WHERE user_id = $1
+    GROUP BY payment_method`,
+    [userId],
+  )
+
+  const methodBalances = balanceByMethod.rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.payment_method] = Number(r.balance)
+    return acc
+  }, {})
+
   const recent = await db
     .select({
       id: transactions.id,
@@ -209,6 +225,12 @@ export async function getDashboardSummary() {
       paymentMethod: r.payment_method,
       total: Number(r.total),
     })),
+    // Cash and debit/transfer both reflect money the user actually has on
+    // hand or in their bank account; credit card balance reflects debt, so
+    // it's kept separate (negative when there's outstanding spend to pay).
+    cashBalance: methodBalances.cash ?? 0,
+    accountBalance: (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0),
+    creditBalance: methodBalances.credit ?? 0,
     recent,
   }
 }

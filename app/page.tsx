@@ -5,6 +5,7 @@ import { getDashboardSummary } from "@/app/actions/transactions"
 import { getCategories } from "@/app/actions/categories"
 import { getGoals } from "@/app/actions/goals"
 import { SummaryCards } from "@/components/dashboard/summary-cards"
+import { MethodBalanceCards } from "@/components/dashboard/method-balance-cards"
 import { MonthlyChart } from "@/components/dashboard/monthly-chart"
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown"
 import { PaymentMethodChart } from "@/components/dashboard/payment-method-chart"
@@ -42,6 +43,12 @@ export default async function DashboardPage() {
         expenseMonth={summary.expenseMonth}
         balanceMonth={summary.balanceMonth}
         balanceTotal={summary.balanceTotal}
+      />
+
+      <MethodBalanceCards
+        cashBalance={summary.cashBalance}
+        accountBalance={summary.accountBalance}
+        creditBalance={summary.creditBalance}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

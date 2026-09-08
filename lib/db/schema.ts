@@ -104,3 +104,40 @@ export const goalContributions = pgTable("goal_contributions", {
   occurredAt: date("occurred_at", { mode: "string" }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 })
+
+// Pockets are money the user sets aside as savings that is still physically
+// sitting in their bank account. Depositing into a pocket doesn't create a
+// transaction (no money actually leaves the account) — it just earmarks
+// part of the account balance so the dashboard can show how much is truly
+// "free" versus already committed to savings.
+export const pockets = pgTable("pockets", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id"),
+  name: text("name").notNull(),
+  currentAmount: numeric("current_amount", { precision: 14, scale: 2 }).notNull().default("0"),
+  icon: text("icon").notNull().default("piggy-bank"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const pocketMovements = pgTable("pocket_movements", {
+  id: serial("id").primaryKey(),
+  pocketId: integer("pocket_id").notNull(),
+  type: text("type").notNull(), // "deposit" | "withdrawal"
+  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+  occurredAt: date("occurred_at", { mode: "string" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
+// Credit card payments just record money paid toward the credit card debt so
+// the dashboard can show a lower (less negative) credit card balance. They
+// are intentionally NOT transactions: they don't touch cash/account balance,
+// byPaymentMethod totals, or the transactions list — paying off a credit
+// card doesn't change how much cash/account money the user has on record
+// here, it only reflects that the debt itself is now smaller.
+export const creditCardPayments = pgTable("credit_card_payments", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id"),
+  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+  occurredAt: date("occurred_at", { mode: "string" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+})

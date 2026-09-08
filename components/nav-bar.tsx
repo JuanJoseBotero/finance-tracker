@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutGrid, ArrowLeftRight, Target, Wallet, LogOut } from "lucide-react"
+import { LayoutGrid, ArrowLeftRight, Target, PiggyBank, Wallet, LogOut } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +22,7 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
   { href: "/movimientos", label: "Movimientos", icon: ArrowLeftRight },
   { href: "/metas", label: "Metas", icon: Target },
+  { href: "/bolsillos", label: "Bolsillos", icon: PiggyBank },
 ]
 
 const AUTH_ROUTES = ["/sign-in", "/sign-up"]

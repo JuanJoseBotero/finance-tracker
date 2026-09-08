@@ -1,7 +1,7 @@
 "use server"
 
 import { db, pool } from "@/lib/db"
-import { transactions, categories } from "@/lib/db/schema"
+import { transactions, categories, pockets, creditCardPayments } from "@/lib/db/schema"
 import { auth } from "@/lib/auth"
 import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -170,6 +170,31 @@ export async function getDashboardSummary() {
     [startOfMonth, userId],
   )
 
+  const balanceByMethod = await pool.query<{
+    payment_method: string
+    balance: string
+  }>(
+    `SELECT payment_method, COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END), 0) AS balance
+    FROM transactions
+    WHERE user_id = $1
+    GROUP BY payment_method`,
+    [userId],
+  )
+
+  const methodBalances = balanceByMethod.rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.payment_method] = Number(r.balance)
+    return acc
+  }, {})
+
+  const userPockets = await db.select().from(pockets).where(eq(pockets.userId, userId))
+  const pocketsTotal = userPockets.reduce((sum, p) => sum + Number(p.currentAmount), 0)
+
+  const userCreditPayments = await db
+    .select()
+    .from(creditCardPayments)
+    .where(eq(creditCardPayments.userId, userId))
+  const creditPaymentsTotal = userCreditPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+
   const recent = await db
     .select({
       id: transactions.id,
@@ -209,6 +234,17 @@ export async function getDashboardSummary() {
       paymentMethod: r.payment_method,
       total: Number(r.total),
     })),
+    // Cash and debit/transfer both reflect money the user actually has on
+    // hand or in their bank account; credit card balance reflects debt, so
+    // it's kept separate (negative when there's outstanding spend to pay).
+    // Money saved into pockets is still physically in the account, so it's
+    // subtracted here to show the truly "free" (uncommitted) account balance.
+    cashBalance: methodBalances.cash ?? 0,
+    accountBalance: (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal,
+    // Payments recorded against the credit card only reduce the displayed
+    // debt (move it closer to zero) — they don't touch any other balance.
+    creditBalance: (methodBalances.credit ?? 0) + creditPaymentsTotal,
+    pocketsTotal,
     recent,
   }
 }

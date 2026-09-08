@@ -74,6 +74,15 @@ export const GOAL_ICONS = [
   "landmark",
 ] as const
 
+export const POCKET_ICONS = [
+  "piggy-bank",
+  "wallet",
+  "landmark",
+  "gift",
+  "briefcase",
+  "shopping-bag",
+] as const
+
 const currencyFormatter = new Intl.NumberFormat("es-CO", {
   style: "currency",
   currency: "COP",

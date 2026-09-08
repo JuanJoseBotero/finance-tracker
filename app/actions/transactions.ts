@@ -189,6 +189,18 @@ export async function getDashboardSummary() {
   const userPockets = await db.select().from(pockets).where(eq(pockets.userId, userId))
   const pocketsTotal = userPockets.reduce((sum, p) => sum + Number(p.currentAmount), 0)
 
+  // Total spent on the credit card. Credit purchases are eventually paid off
+  // from the bank account, so they're subtracted from the free account
+  // balance as a pending obligation. Paying the card off (credit_card_payments)
+  // does NOT add this money back, per the user's chosen behavior.
+  const creditSpend = await pool.query<{ total: string }>(
+    `SELECT COALESCE(SUM(amount), 0) AS total
+    FROM transactions
+    WHERE user_id = $1 AND type = 'expense' AND payment_method = 'credit'`,
+    [userId],
+  )
+  const creditSpendTotal = Number(creditSpend.rows[0]?.total ?? 0)
+
   const userCreditPayments = await db
     .select()
     .from(creditCardPayments)
@@ -240,7 +252,8 @@ export async function getDashboardSummary() {
     // Money saved into pockets is still physically in the account, so it's
     // subtracted here to show the truly "free" (uncommitted) account balance.
     cashBalance: methodBalances.cash ?? 0,
-    accountBalance: (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal,
+    accountBalance:
+      (methodBalances.debit ?? 0) + (methodBalances.transfer ?? 0) - pocketsTotal - creditSpendTotal,
     // Payments recorded against the credit card only reduce the displayed
     // debt (move it closer to zero) — they don't touch any other balance.
     creditBalance: (methodBalances.credit ?? 0) + creditPaymentsTotal,
